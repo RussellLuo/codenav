@@ -1,0 +1,24 @@
+[package]
+name = "codenav"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.4"
+#tree-sitter = "0.22"
+tree-sitter = "0.20.4"
+#tree-sitter-rust = "0.23"
+#tree-sitter-python = "0.23"
+tree-sitter-python = "0.20.4"
+tree-sitter-stack-graphs = "0.9"
+tree-sitter-stack-graphs-python = "0.2"
+tree-sitter-graph = "0.11"
+stack-graphs = "0.14"
+string-builder = "0.2.0"
+
+[build-dependencies]
+cc = "*"
+
+[features]
+default = ["cli"]
+cli = ["tree-sitter-stack-graphs/cli"]
