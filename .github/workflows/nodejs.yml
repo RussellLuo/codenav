@@ -234,7 +234,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -268,7 +268,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-gnu
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -304,7 +304,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-musl
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -330,7 +330,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-unknown-linux-gnu
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -367,7 +367,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-unknown-linux-musl
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -409,7 +409,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-armv7-unknown-linux-gnueabihf
-          path: .
+          path: codenav-nodejs/artifacts
       - name: List packages
         run: ls -R .
         shell: bash
@@ -453,12 +453,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-apple-darwin
-          path: artifacts
+          path: codenav-nodejs/artifacts
       - name: Download macOS arm64 artifact
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-apple-darwin
-          path: artifacts
+          path: codenav-nodejs/artifacts
       - name: Combine binaries
         run: yarn universal
       - name: Upload artifact
@@ -495,7 +495,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: codenav-nodejs/artifacts
       - name: Move artifacts
         run: yarn artifacts
       - name: List packages
