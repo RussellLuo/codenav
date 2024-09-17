@@ -1,11 +1,7 @@
-name: JavaScript
-env:
-  DEBUG: napi:*
-  APP_NAME: codenav
-  MACOSX_DEPLOYMENT_TARGET: '10.13'
+name: Nodejs
+
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 on:
   push:
     branches:
@@ -21,7 +17,7 @@ on:
   pull_request:
     paths:
       - codenav-nodejs/**
-      - .github/workflows/javascript.yml
+      - .github/workflows/nodejs.yml
 jobs:
   build:
     strategy:
