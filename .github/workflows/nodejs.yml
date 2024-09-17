@@ -273,7 +273,7 @@ jobs:
           name: bindings-x86_64-unknown-linux-gnu
           path: codenav-nodejs/artifacts
       - name: List packages
-        run: ls -R .
+        run: pwd && ls -R .
         shell: bash
       - name: Test bindings
         run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
