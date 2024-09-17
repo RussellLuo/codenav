@@ -1,5 +1,8 @@
 name: Nodejs
 
+env:
+  APP_NAME: codenav
+
 permissions:
   contents: read
 on:
