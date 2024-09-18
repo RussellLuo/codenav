@@ -1,13 +1,10 @@
-import test from 'ava'
+import test from 'ava';
 
 import * as path from 'path';
 const EXAMPLES_DIR = path.join(path.dirname(path.dirname(import.meta.dirname)), 'examples');
 
-import * as crypto from "node:crypto";
-const random_id = crypto.randomBytes(20).toString('hex');
-
 import { Navigator, Snippet } from '../index';
-let nav = new Navigator(`test_${random_id}.sqlite`);
+let nav = new Navigator('test.sqlite');
 
 test('resloving references', (t) => {
   nav.index([EXAMPLES_DIR], true);
