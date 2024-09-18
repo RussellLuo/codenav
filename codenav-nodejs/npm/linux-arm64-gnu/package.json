@@ -1,0 +1,23 @@
+{
+  "name": "@codenav/codenav-linux-arm64-gnu",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "codenav.linux-arm64-gnu.node",
+  "files": [
+    "codenav.linux-arm64-gnu.node"
+  ],
+  "description": "Node.js bindings for CodeNav.",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/RussellLuo/codenav",
+  "libc": [
+    "glibc"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@codenav/codenav-linux-arm-gnueabihf",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "main": "codenav.linux-arm-gnueabihf.node",
+  "files": [
+    "codenav.linux-arm-gnueabihf.node"
+  ],
+  "description": "Node.js bindings for CodeNav.",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/RussellLuo/codenav"
+}

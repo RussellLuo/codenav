@@ -1,13 +1,13 @@
-import path from 'path';
-const EXAMPLES_DIR = `${path.dirname(path.dirname(import.meta.dirname))}/examples`;
+import * as path from 'path';
+const EXAMPLES_DIR = path.join(path.dirname(path.dirname(import.meta.dirname)), 'examples');
 
 import { Navigator, Snippet, TextMode } from '../index.js';
-let nav = new Navigator('./test.sqlite');
+let nav = new Navigator('test.sqlite');
 
 // nav.clean(false);
 nav.index([EXAMPLES_DIR], false);
 
-let snippet = new Snippet(`${EXAMPLES_DIR}/chef.py`, 2, 2);
+let snippet = new Snippet(path.join(EXAMPLES_DIR, 'chef.py'), 2, 2);
 
 for (let reference of snippet.references('')) {
     let definitions = nav.resolve(reference);

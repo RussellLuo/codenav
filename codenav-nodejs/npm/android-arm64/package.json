@@ -1,0 +1,20 @@
+{
+  "name": "@codenav/codenav-android-arm64",
+  "version": "0.0.0",
+  "os": [
+    "android"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "codenav.android-arm64.node",
+  "files": [
+    "codenav.android-arm64.node"
+  ],
+  "description": "Node.js bindings for CodeNav.",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/RussellLuo/codenav"
+}
