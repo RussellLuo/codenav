@@ -508,16 +508,11 @@ jobs:
       - name: Publish
         run: |
           npm config set provenance true
-          if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
-          then
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --access public
-          elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
-          then
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --tag next --access public
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          if [[ $GITHUB_REF =~ refs/tags/v(.*)-beta.* ]]; then
+            npm publish --access public --tag preview
           else
-            echo "Not a release, skipping publish"
+            npm publish --access public
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
