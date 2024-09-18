@@ -237,7 +237,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
         run: ls -R .
         shell: bash
@@ -271,9 +271,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-gnu
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
-        run: pwd && ls -R .
+        run: ls -R .
         shell: bash
       - name: Test bindings
         run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
@@ -307,7 +307,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-x86_64-unknown-linux-musl
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
         run: ls -R .
         shell: bash
@@ -333,7 +333,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-unknown-linux-gnu
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
         run: ls -R .
         shell: bash
@@ -371,7 +371,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-aarch64-unknown-linux-musl
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
         run: ls -R .
         shell: bash
@@ -414,7 +414,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bindings-armv7-unknown-linux-gnueabihf
-          path: codenav-nodejs/artifacts
+          path: codenav-nodejs
       - name: List packages
         run: ls -R .
         shell: bash
