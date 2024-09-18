@@ -500,8 +500,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: codenav-nodejs/artifacts
-      - name: List artifacts
-        run: ls -R ./artifacts
       - name: Move artifacts
         run: yarn artifacts --dir artifacts --dist npm
       - name: List packages

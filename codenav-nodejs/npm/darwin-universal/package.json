@@ -1,0 +1,17 @@
+{
+  "name": "@codenav/codenav-darwin-universal",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "main": "codenav.darwin-universal.node",
+  "files": [
+    "codenav.darwin-universal.node"
+  ],
+  "description": "Node.js bindings for CodeNav.",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/RussellLuo/codenav"
+}
