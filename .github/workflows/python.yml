@@ -5,9 +5,10 @@ on:
     branches:
       - main
     tags:
-      - '*'
+      - 'python-v*'
   pull_request:
     paths:
+      - src/**
       - codenav-python/**
       - .github/workflows/python.yml
 
