@@ -3,8 +3,11 @@ import test from 'ava'
 import path from 'path';
 const EXAMPLES_DIR = `${path.dirname(path.dirname(import.meta.dirname))}/examples`;
 
+import * as crypto from "node:crypto";
+const random_id = crypto.randomBytes(20).toString('hex');
+
 import { Navigator, Snippet } from '../index';
-let nav = new Navigator('./test.sqlite');
+let nav = new Navigator(`./test_${random_id}.sqlite`);
 
 test('resloving references', (t) => {
   nav.index([EXAMPLES_DIR], true);
@@ -25,5 +28,5 @@ test('resloving references', (t) => {
   
   nav.clean(true);
 
-  t.deepEqual(defs, ['/chef.py:0:20', '/kitchen.py:2:4', '/stove.py:3:4'], 'bad definitions');
+  t.deepEqual(defs, ['/chef.py:0:20', '/kitchen.py:2:4', '/stove.py:3:4'], 'unexpected definitions');
 })
