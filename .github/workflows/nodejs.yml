@@ -504,11 +504,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: codenav-nodejs/artifacts
-      - name: List artifacts
-        run: ls -R ./artifacts && ls -R codenav-nodejs/artifacts
-        shell: bash
       - name: Move artifacts
-        run: yarn artifacts --dir codenav-nodejs/artifacts --dist codenav-nodejs/npm
+        run: yarn artifacts --dir artifacts --dist npm
       - name: List packages
         run: ls -R ./npm
         shell: bash
