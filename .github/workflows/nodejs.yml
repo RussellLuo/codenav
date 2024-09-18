@@ -213,8 +213,10 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc
+          # There are issues with windows
+          # see https://github.com/RussellLuo/codenav/actions/runs/10915527605/job/30295604917
+          #- host: windows-latest
+          #  target: x86_64-pc-windows-msvc
         node:
           # - '18'
           - '20'
@@ -276,7 +278,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim /bin/sh -c "cd /build && yarn test"
+        run: docker run --rm -v ${{ github.workspace }}:/build -w /build node:${{ matrix.node }}-slim /bin/sh -c "cd /build/codenav-nodejs && yarn test"
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
     needs:
@@ -312,7 +314,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine /bin/sh -c "cd /build && yarn test"
+        run: docker run --rm -v ${{ github.workspace }}:/build -w /build node:${{ matrix.node }}-alpine /bin/sh -c "cd /build/codenav-nodejs && yarn test"
   test-linux-aarch64-gnu-binding:
     name: Test bindings on aarch64-unknown-linux-gnu - node@${{ matrix.node }}
     needs:
