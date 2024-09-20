@@ -13,7 +13,16 @@ use tree_sitter_stack_graphs::cli::util::SourcePosition;
 use tree_sitter_stack_graphs::{CancellationFlag, NoCancellation};
 
 /// The tree-sitter references query source for Python language.
-pub const REFERENCES_QUERY_SOURCE: &str = include_str!("python-references.scm");
+pub const PYTHON_REFERENCES_QUERY_SOURCE: &str = include_str!("python-references.scm");
+
+/// The tree-sitter references query source for JavaScript language.
+pub const JAVASCRIPT_REFERENCES_QUERY_SOURCE: &str = include_str!("javascript-references.scm");
+
+#[derive(Debug, Clone)]
+pub enum Language {
+    Python,
+    JavaScript,
+}
 
 pub enum TextMode {
     Overview,
@@ -32,6 +41,8 @@ pub struct Span {
 }
 
 pub struct Definition {
+    /// Programming language.
+    pub language: Language,
     /// File path
     pub path: String,
     /// Span
@@ -63,26 +74,36 @@ pub struct ParseResult {
 }
 
 pub struct Navigator {
+    language: Language,
     db_path: PathBuf,
-    language: String,
     verbose: bool,
     hide_error_details: bool,
 }
 
 impl Navigator {
-    pub fn new(db_path: String) -> Self {
+    pub fn new(language: Language, db_path: String) -> Self {
         Self {
             db_path: PathBuf::from(db_path),
-            language: "python".to_string(),
+            language: language,
             verbose: false,
             hide_error_details: false,
         }
     }
 
     pub fn index(&self, source_paths: Vec<String>, force: bool) -> anyhow::Result<()> {
-        // Only handle python language for now.
-        let lc =
-            tree_sitter_stack_graphs_python::try_language_configuration(&NoCancellation).unwrap();
+        // Only handle Python and JavaScript for now.
+        let lc = match self.language {
+            Language::Python => {
+                tree_sitter_stack_graphs_python::try_language_configuration(&NoCancellation)
+                    .unwrap()
+            }
+            Language::JavaScript => {
+                tree_sitter_stack_graphs_javascript::try_language_configuration(&NoCancellation)
+                    .unwrap()
+            }
+            _ => panic!("Unsupport language: {:?}", self.language),
+        };
+
         let configurations = vec![lc];
         let load_args = LanguageConfigurationsLoaderArgs::new();
         let mut loader = load_args.get(configurations)?;
@@ -153,6 +174,7 @@ impl Navigator {
             //}
             for definition in definitions.into_iter() {
                 all_definitions.push(Definition {
+                    language: self.language.clone(),
                     path: definition.path.display().to_string(),
                     span: Span {
                         start: Point {
@@ -207,14 +229,16 @@ impl Navigator {
 }
 
 pub struct Snippet {
+    language: Language,
     path: String,
     line_start: usize,
     line_end: usize,
 }
 
 impl Snippet {
-    pub fn new(path: String, line_start: usize, line_end: usize) -> Self {
+    pub fn new(language: Language, path: String, line_start: usize, line_end: usize) -> Self {
         Self {
+            language: language,
             path: path,
             line_start: line_start,
             line_end: line_end,
@@ -224,7 +248,11 @@ impl Snippet {
     pub fn references(&self, query_path: String) -> Vec<Reference> {
         let file_path = PathBuf::from(&self.path);
         let query_source = if query_path.is_empty() {
-            REFERENCES_QUERY_SOURCE.to_string()
+            match self.language {
+                Language::Python => PYTHON_REFERENCES_QUERY_SOURCE.to_string(),
+                Language::JavaScript => JAVASCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
+                _ => panic!("Unsupport language: {:?}", self.language),
+            }
         } else {
             let query_path = PathBuf::from(query_path);
             fs::read_to_string(query_path).expect("Should have been able to read the query file")
@@ -236,7 +264,11 @@ impl Snippet {
         //println!("[QUERY]\n\n{}\n", query_source);
 
         let mut parser = Parser::new();
-        let language = tree_sitter_python::language();
+        let language = match self.language {
+            Language::Python => tree_sitter_python::language(),
+            Language::JavaScript => tree_sitter_javascript::language(),
+            _ => panic!("Unsupport language: {:?}", self.language),
+        };
         parser
             .set_language(language)
             .expect("Error loading Python parser");
@@ -286,23 +318,34 @@ impl Definition {
         let source_code = fs::read(&file_path).expect("Should have been able to read the file");
 
         let mut parser = Parser::new();
-        let language = tree_sitter_python::language();
+        let language = match self.language {
+            Language::Python => tree_sitter_python::language(),
+            Language::JavaScript => tree_sitter_javascript::language(),
+            _ => panic!("Unsupport language: {:?}", self.language),
+        };
         parser
             .set_language(language)
-            .expect("Error loading Python parser");
+            .expect(format!("Error loading {:?} parser", self.language).as_str());
 
         let tree = parser.parse(source_code.clone(), None).unwrap();
         let root_node = tree.root_node();
         let mut cursor = tree.walk();
 
+        let module_node_kind = match self.language {
+            Language::Python => "module",
+            Language::JavaScript => "program",
+            _ => panic!("Unsupport language: {:?}", self.language),
+        };
+
         let mut reached_root = false;
         while !reached_root {
             let node = cursor.node();
             let start_pos = node.start_position();
-            if start_pos.row == self.span.start.line && node.kind() != "module" {
+            //println!("kind: {:?}, start.line: {:?}, start.column: {:?}", node.kind(), start_pos.row, start_pos.column);
+            if start_pos.row == self.span.start.line && node.kind() != module_node_kind {
                 match mode {
                     TextMode::Complete => {
-                        return show_text(&source_code, node);
+                        return node.utf8_text(&source_code).unwrap_or("").to_string();
                     }
                     TextMode::Overview => {
                         let mut lines: Vec<String> = String::from_utf8(source_code)
@@ -318,7 +361,13 @@ impl Definition {
                         for i in node.end_position().row + 1..lines.len() {
                             lines[i] = "".to_string();
                         }
-                        collect_node_lines(&mut lines, node);
+                        match self.language {
+                            Language::Python => self.python_collect_node_lines(&mut lines, node),
+                            Language::JavaScript => {
+                                self.javascript_collect_node_lines(&mut lines, node)
+                            }
+                            _ => panic!("Unsupport language: {:?}", self.language),
+                        }
                         return lines
                             .into_iter()
                             .filter(|l| !l.is_empty())
@@ -351,80 +400,171 @@ impl Definition {
 
         String::from("")
     }
-}
 
-fn show_text(source_code: &Vec<u8>, node: Node) -> String {
-    node.utf8_text(&source_code).unwrap_or("").to_string()
-}
+    pub fn python_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
+        //println!("kind: {:?}, node: {:?}", node.kind(), node);
+        match node.kind() {
+            "class_definition" => {
+                //println!("this is a class definition");
 
-fn collect_node_lines(lines: &mut Vec<String>, node: Node) {
-    //println!("kind: {:?}, node: {:?}", node.kind(), node);
-    match node.kind() {
-        "class_definition" => {
-            //println!("this is a class definition");
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    //println!("kind: {:?}, child node: {:?}", n.kind(), n);
 
-            for i in 0..node.child_count() {
-                let n = node.child(i).unwrap();
-                //println!("kind: {:?}, child node: {:?}", n.kind(), n);
-
-                for j in 0..n.child_count() {
-                    let nn = n.child(j).unwrap();
-                    //println!("kind: {:?}, child child node: {:?}", nn.kind(), nn);
-                    match nn.kind() {
-                        "function_definition" => {
-                            collect_node_lines(lines, nn);
+                    for j in 0..n.child_count() {
+                        let nn = n.child(j).unwrap();
+                        //println!("kind: {:?}, child child node: {:?}", nn.kind(), nn);
+                        match nn.kind() {
+                            "function_definition" => {
+                                self.python_collect_node_lines(lines, nn);
+                            }
+                            "decorated_definition" => {
+                                self.python_collect_node_lines(lines, nn);
+                            }
+                            _ => {}
                         }
-                        "decorated_definition" => {
-                            collect_node_lines(lines, nn);
+                    }
+                }
+            }
+
+            "function_definition" => {
+                //println!("this is a function definition");
+
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    if n.kind() == "block" {
+                        // Clear lines belonging to the function block.
+                        let start = n.start_position();
+                        let end = n.end_position();
+                        for i in start.row..end.row {
+                            lines[i] = "".to_string();
+                        }
+                        lines[end.row] = "...".to_string();
+                    }
+                }
+            }
+
+            "decorated_definition" => {
+                //println!("this is a decorated function definition");
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    if n.kind() == "function_definition" {
+                        self.python_collect_node_lines(lines, n);
+                    }
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    pub fn javascript_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
+        match node.kind() {
+            "export_statement" => {
+                //println!("this is a export statement");
+
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    //println!("kind: {:?}, child node: {:?}", n.kind(), n);
+
+                    match n.kind() {
+                        "class_declaration" | "function_declaration" => {
+                            self.javascript_collect_node_lines(lines, n);
                         }
                         _ => {}
                     }
                 }
             }
-        }
 
-        "function_definition" => {
-            //println!("this is a function definition");
+            "class_declaration" => {
+                //println!("this is a class declaration");
 
-            for i in 0..node.child_count() {
-                let n = node.child(i).unwrap();
-                if n.kind() == "block" {
-                    // Clear lines belonging to the function block.
-                    let start = n.start_position();
-                    let end = n.end_position();
-                    for i in start.row..end.row {
-                        lines[i] = "".to_string();
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    //println!("kind: {:?}, child node: {:?}", n.kind(), n);
+
+                    for j in 0..n.child_count() {
+                        let nn = n.child(j).unwrap();
+                        //println!("kind: {:?}, child child node: {:?}", nn.kind(), nn);
+                        match nn.kind() {
+                            "method_definition" => {
+                                self.javascript_collect_node_lines(lines, nn);
+                            }
+                            _ => {}
+                        }
                     }
-                    lines[end.row] = "...".to_string();
                 }
             }
-        }
 
-        "decorated_definition" => {
-            //println!("this is a decorated function definition");
-            for i in 0..node.child_count() {
-                let n = node.child(i).unwrap();
-                if n.kind() == "function_definition" {
-                    collect_node_lines(lines, n);
+            "function_declaration" | "method_definition" => {
+                //println!("this is a function declaration");
+
+                for i in 0..node.child_count() {
+                    let n = node.child(i).unwrap();
+                    if n.kind() == "statement_block" {
+                        // Clear lines belonging to the function block.
+                        let start = n.start_position();
+                        let end = n.end_position();
+                        for i in start.row + 1..end.row {
+                            // Only clear lines between the left brace and the right brace.
+                            lines[i] = "".to_string();
+                        }
+                        if end.row - start.row > 1 {
+                            // If the function block is not empty, replace the body with an ellipsis.
+                            lines[end.row - 1] = "...".to_string();
+                        }
+                    }
                 }
             }
-        }
 
-        _ => {}
+            _ => {}
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
-    fn navigator_resolve() {
+    fn python_snippet_references() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let examples_dir = PathBuf::from(manifest_dir).join("examples");
+        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
 
-        let mut nav = Navigator::new(String::from("./test.sqlite"));
-        nav.index(vec![examples_dir.display().to_string()], false);
+        let mut snippet = Snippet::new(
+            Language::Python,
+            examples_dir.join("chef.py").display().to_string(),
+            2,
+            2,
+        );
+        let references = snippet.references(String::from(""));
+        let refs: Vec<_> = references
+            .into_iter()
+            .map(|r| {
+                format!(
+                    "{}:{}:{}=>{}",
+                    Path::new(&r.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    r.line,
+                    r.column,
+                    r.text,
+                )
+            })
+            .collect();
+
+        assert_eq!(refs, vec!["chef.py:2:0=>broil"]);
+    }
+
+    #[test]
+    fn python_navigator_resolve() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
+
+        let mut nav = Navigator::new(Language::Python, String::from("./test.sqlite"));
+        nav.index(vec![examples_dir.display().to_string()], true);
 
         let reference = Reference {
             path: examples_dir.join("chef.py").display().to_string(),
@@ -439,7 +579,10 @@ mod tests {
             .map(|d| {
                 format!(
                     "{}:{}:{}",
-                    d.path.strip_prefix(manifest_dir).unwrap(),
+                    Path::new(&d.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
                     d.span.start.line,
                     d.span.start.column
                 )
@@ -448,22 +591,16 @@ mod tests {
 
         nav.clean(true);
 
-        assert_eq!(
-            defs,
-            vec![
-                "/examples/chef.py:0:20",
-                "/examples/kitchen.py:2:4",
-                "/examples/stove.py:3:4"
-            ]
-        );
+        assert_eq!(defs, vec!["chef.py:0:20", "kitchen.py:2:4", "stove.py:3:4"]);
     }
 
     #[test]
-    fn definition_text() {
+    fn python_definition_text() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let examples_dir = PathBuf::from(manifest_dir).join("examples");
+        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
 
         let definition = Definition {
+            language: Language::Python,
             path: examples_dir.join("stove.py").display().to_string(),
             span: Span {
                 start: Point { line: 3, column: 4 },
@@ -475,5 +612,105 @@ mod tests {
             "def broil():\n    pass"
         );
         assert_eq!(definition.text(TextMode::Overview), "def broil():\n...");
+    }
+
+    #[test]
+    fn javascript_snippet_references() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("javascript");
+
+        let mut snippet = Snippet::new(
+            Language::JavaScript,
+            examples_dir.join("chef.js").display().to_string(),
+            2,
+            2,
+        );
+        let references = snippet.references(String::from(""));
+        let refs: Vec<_> = references
+            .into_iter()
+            .map(|r| {
+                format!(
+                    "{}:{}:{}=>{}",
+                    Path::new(&r.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    r.line,
+                    r.column,
+                    r.text,
+                )
+            })
+            .collect();
+
+        assert_eq!(refs, vec!["chef.js:2:0=>broil"]);
+    }
+
+    #[test]
+    fn javascript_navigator_resolve() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("javascript");
+
+        let mut nav = Navigator::new(Language::JavaScript, String::from("./test.sqlite"));
+        nav.index(vec![examples_dir.display().to_string()], true);
+
+        let reference = Reference {
+            path: examples_dir.join("chef.js").display().to_string(),
+            line: 2,
+            column: 4,
+            text: String::from("broil"),
+        };
+
+        let definitions = nav.resolve(reference);
+        let defs: Vec<_> = definitions
+            .into_iter()
+            .map(|d| {
+                format!(
+                    "{}:{}:{}",
+                    Path::new(&d.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    d.span.start.line,
+                    d.span.start.column
+                )
+            })
+            .collect();
+
+        //nav.clean(true);
+
+        assert_eq!(defs, vec!["chef.js:0:9", "kitchen.js:2:16"]);
+    }
+
+    #[test]
+    fn javascript_definition_text() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("javascript");
+
+        let definition = Definition {
+            language: Language::JavaScript,
+            path: examples_dir.join("stove.js").display().to_string(),
+            span: Span {
+                start: Point {
+                    line: 4,
+                    column: 16,
+                },
+                end: Point {
+                    line: 4,
+                    column: 20,
+                },
+            },
+        };
+        assert_eq!(
+            definition.text(TextMode::Complete),
+            "export function broil() {\n    console.log('broil');\n}",
+        );
+        assert_eq!(
+            definition.text(TextMode::Overview),
+            "export function broil() {\n...\n}",
+        );
     }
 }

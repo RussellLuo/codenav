@@ -1,9 +1,10 @@
 (call
   function: [
-      (identifier) @name.reference.call
-      (attribute
-        object: (identifier) @object.reference.call
-        attribute: (identifier) @name.reference.call)
+    (identifier) @name.reference.call
+    (attribute
+      object: (identifier) @object.reference.call
+      attribute: (identifier) @name.reference.call
+    )
   ]
   arguments: (
     (argument_list (
