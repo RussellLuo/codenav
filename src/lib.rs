@@ -591,7 +591,7 @@ mod tests {
 
         nav.clean(true);
 
-        assert_eq!(defs, vec!["chef.py:0:20", "kitchen.py:2:4", "stove.py:3:4"]);
+        assert_eq!(defs, vec!["chef.py:0:20", "kitchen.py:2:4"]);
     }
 
     #[test]
@@ -609,7 +609,7 @@ mod tests {
         };
         assert_eq!(
             definition.text(TextMode::Complete),
-            "def broil():\n    pass"
+            "def broil():\n    print('broil')"
         );
         assert_eq!(definition.text(TextMode::Overview), "def broil():\n...");
     }
@@ -617,7 +617,9 @@ mod tests {
     #[test]
     fn javascript_snippet_references() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("javascript");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("javascript");
 
         let mut snippet = Snippet::new(
             Language::JavaScript,

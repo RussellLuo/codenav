@@ -1,8 +1,8 @@
 def bake():
-    pass
+    print('bake')
 
 def broil():
-    pass
+    print('broil')
 
 def saute():
-    pass
+    print('saute')

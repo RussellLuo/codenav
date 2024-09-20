@@ -14,20 +14,23 @@ pip install codenav-python
 
 ```python
 import codenav
-# Create a navigator with a test database.
-nav = codenav.Navigator('./test.sqlite')
-# Index the examples folder.
-nav.index(['/<YOUR_LOCAL_PATH>/codenav/examples'])
-# Construct a reference "broil".
-reference = codenav.Reference('/<YOUR_LOCAL_PATH>/codenav/examples/chef.py', 2, 4, 'broil')
-# Find the definition(s) for "broil".
+nav = codenav.Navigator(codenav.Language.Python, './test.sqlite')
+nav.index(['<YOUR_LOCAL_PATH>/codenav/examples/python'])
+reference = codenav.Reference('<YOUR_LOCAL_PATH>/codenav/examples/python/chef.py', 2, 0, 'broil')
 definitions = nav.resolve(reference)
 for d in definitions:
     print(f'{d.path}:{d.span.start.line}:{d.span.start.column}')
     print(d.text())
-# Clean the test database.
-nav.clean()
+nav.clean(True)
 ```
+
+
+## Examples
+
+- [Resolve a Python reference](examples/resolve_python_reference.py)
+- [Resolve a Python snippet](examples/resolve_python_snippet.py)
+- [Resolve a JavaScript reference](examples/resolve_javascript_reference.py)
+- [Resolve a JavaScript snippet](examples/resolve_javascript_snippet.py)
 
 
 ## Development
@@ -44,10 +47,13 @@ Build and install the module:
 maturin develop
 ```
 
-Run the test script:
+Run the examples:
 
 ```bash
-python examples/test.py
+python examples/resolve_python_reference.py
+python examples/resolve_python_snippet.py
+python examples/resolve_javascript_reference.py
+python examples/resolve_javascript_snippet.py
 ```
 
 

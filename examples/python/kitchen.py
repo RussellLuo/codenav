@@ -1,6 +1,5 @@
-from stove import *
+import stove
 
 def broil():
     print("We're broiling!")
-    import stove
     return stove.broil()

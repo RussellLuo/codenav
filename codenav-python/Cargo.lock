@@ -284,8 +284,10 @@ dependencies = [
  "string-builder",
  "tree-sitter",
  "tree-sitter-graph",
+ "tree-sitter-javascript",
  "tree-sitter-python",
  "tree-sitter-stack-graphs",
+ "tree-sitter-stack-graphs-javascript",
  "tree-sitter-stack-graphs-python",
 ]
 
@@ -1376,6 +1378,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-javascript"
+version = "0.20.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d015c02ea98b62c806f7329ff71c383286dfc3a7a7da0cc484f6e42922f73c2c"
+dependencies = [
+ "cc",
+ "tree-sitter",
+]
+
+[[package]]
 name = "tree-sitter-loader"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1436,6 +1448,20 @@ dependencies = [
  "tree-sitter-graph",
  "tree-sitter-loader",
  "walkdir",
+]
+
+[[package]]
+name = "tree-sitter-stack-graphs-javascript"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8d53b6d74649ef96e4836c5a0761daf63bef931c328587f16f5b667c8ca188c"
+dependencies = [
+ "serde",
+ "serde_json",
+ "stack-graphs",
+ "tree-sitter-graph",
+ "tree-sitter-javascript",
+ "tree-sitter-stack-graphs",
 ]
 
 [[package]]

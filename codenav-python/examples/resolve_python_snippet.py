@@ -1,13 +1,12 @@
 from pathlib import Path
-EXAMPLES_DIR = f'{Path(__file__).parent.parent.parent}/examples'
+EXAMPLES_DIR = f'{Path(__file__).parent.parent.parent}/examples/python'
 
 import codenav
-nav = codenav.Navigator("./test.sqlite")
 
-# nav.clean()
+nav = codenav.Navigator(codenav.Language.Python, "./test.sqlite")
 nav.index([EXAMPLES_DIR])
 
-snippet = codenav.Snippet(f'{EXAMPLES_DIR}/chef.py', 2, 2)
+snippet = codenav.Snippet(codenav.Language.Python, f'{EXAMPLES_DIR}/kitchen.py', 2, 4)
 
 for reference in snippet.references():
     definitions = nav.resolve(reference)
@@ -19,6 +18,8 @@ for reference in snippet.references():
     print('=' * len(msg))
     print(msg)
 
-    for i, d in enumerate(dependencies):
-        print(f'Found {i}:\n{d.path}:{d.span.start.line}:{d.span.start.column}')
+    for d in dependencies:
+        print(f'{d.path}:{d.span.start.line}:{d.span.start.column}')
         print(d.text())
+
+nav.clean(True)

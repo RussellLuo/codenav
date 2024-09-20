@@ -3,6 +3,34 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyTuple};
 
 #[pyclass]
+#[derive(Clone, Copy, Debug)]
+enum Language {
+    Python = 0,
+    JavaScript = 1,
+}
+
+impl From<codenav::Language> for Language {
+    fn from(language: codenav::Language) -> Self {
+        match language {
+            codenav::Language::Python => Language::Python,
+            codenav::Language::JavaScript => Language::JavaScript,
+            _ => panic!("Unsupport language: {:?}", language),
+        }
+    }
+}
+
+impl Language {
+    // TODO: find a more idiomatic way?
+    fn to(&self) -> codenav::Language {
+        match self {
+            Language::Python => codenav::Language::Python,
+            Language::JavaScript => codenav::Language::JavaScript,
+            _ => panic!("Unsupport language: {:?}", self),
+        }
+    }
+}
+
+#[pyclass]
 #[derive(Clone)]
 struct Point {
     #[pyo3(get)]
@@ -61,6 +89,8 @@ enum TextMode {
 #[derive(Clone)]
 struct Definition {
     #[pyo3(get)]
+    language: Language,
+    #[pyo3(get)]
     path: String,
     #[pyo3(get)]
     span: Span,
@@ -71,6 +101,7 @@ impl Definition {
     #[pyo3(signature = (mode=TextMode::Complete, /))]
     fn text<'py>(&self, py: Python<'py>, mode: TextMode) -> PyResult<String> {
         let d = codenav::Definition {
+            language: self.language.to(),
             path: self.path.clone(),
             span: codenav::Span {
                 start: codenav::Point {
@@ -94,6 +125,7 @@ impl Definition {
 impl From<codenav::Definition> for Definition {
     fn from(d: codenav::Definition) -> Self {
         Self {
+            language: Language::from(d.language),
             path: d.path,
             span: Span::from(d.span),
         }
@@ -222,12 +254,12 @@ impl Navigator {
     //
     // ```python
     // import codenav_python as codenav
-    // nav = codenav.Navigator("./test.sqlite")
+    // nav = codenav.Navigator(codenav.Language.Python, "./test.sqlite")
     // ```
     #[new]
-    fn new(db_path: String) -> Self {
+    fn new(language: Language, db_path: String) -> Self {
         Self {
-            nav: codenav::Navigator::new(db_path),
+            nav: codenav::Navigator::new(language.to(), db_path),
         }
     }
 
@@ -290,12 +322,12 @@ impl Snippet {
     //
     // ```python
     // import codenav_python as codenav
-    // s = codenav.Snippet("test.py", 0, 11)
+    // s = codenav.Snippet(codenav.Language.Python, "test.py", 0, 11)
     // ```
     #[new]
-    fn new(path: String, line_start: usize, line_end: usize) -> Self {
+    fn new(language: Language, path: String, line_start: usize, line_end: usize) -> Self {
         Self {
-            s: codenav::Snippet::new(path, line_start, line_end),
+            s: codenav::Snippet::new(language.to(), path, line_start, line_end),
         }
     }
 
@@ -322,6 +354,7 @@ impl Snippet {
     // ```
     fn contains<'py>(&self, py: Python<'py>, d: Definition) -> PyResult<bool> {
         let contained = self.s.contains(codenav::Definition {
+            language: d.language.to(),
             path: d.path,
             span: codenav::Span {
                 start: codenav::Point {
@@ -342,6 +375,7 @@ impl Snippet {
 #[pymodule]
 #[pyo3(name = "codenav")]
 fn codenav_python(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<Language>()?;
     m.add_class::<Point>()?;
     m.add_class::<Span>()?;
     m.add_class::<TextMode>()?;
