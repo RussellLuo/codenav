@@ -310,8 +310,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { TextMode, Definition, Navigator, Snippet } = nativeBinding
+const { Language, TextMode, Definition, Navigator, Snippet } = nativeBinding
 
+module.exports.Language = Language
 module.exports.TextMode = TextMode
 module.exports.Definition = Definition
 module.exports.Navigator = Navigator

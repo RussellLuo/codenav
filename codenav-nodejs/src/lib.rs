@@ -1,6 +1,34 @@
 use codenav;
 use napi_derive::napi;
 
+#[napi]
+#[derive(Debug)]
+pub enum Language {
+    Python = 0,
+    JavaScript = 1,
+}
+
+impl From<codenav::Language> for Language {
+    fn from(language: codenav::Language) -> Self {
+        match language {
+            codenav::Language::Python => Language::Python,
+            codenav::Language::JavaScript => Language::JavaScript,
+            _ => panic!("Unsupport language: {:?}", language),
+        }
+    }
+}
+
+impl Language {
+    // TODO: find a more idiomatic way?
+    fn to(&self) -> codenav::Language {
+        match self {
+            Language::Python => codenav::Language::Python,
+            Language::JavaScript => codenav::Language::JavaScript,
+            _ => panic!("Unsupport language: {:?}", self),
+        }
+    }
+}
+
 #[napi(object)]
 #[derive(Clone)]
 pub struct Point {
@@ -42,6 +70,7 @@ pub enum TextMode {
 #[napi]
 #[derive(Clone)]
 pub struct Definition {
+    pub language: Language,
     pub path: String,
     pub span: Span,
 }
@@ -51,6 +80,7 @@ impl Definition {
     #[napi]
     pub fn text(&self, mode: TextMode) -> napi::Result<String> {
         let d = codenav::Definition {
+            language: self.language.to(),
             path: self.path.clone(),
             span: codenav::Span {
                 start: codenav::Point {
@@ -75,6 +105,7 @@ impl Definition {
 impl From<codenav::Definition> for Definition {
     fn from(d: codenav::Definition) -> Self {
         Self {
+            language: Language::from(d.language),
             path: d.path,
             span: Span::from(d.span),
         }
@@ -115,13 +146,13 @@ impl Navigator {
     // Example:
     //
     // ```javascript
-    // import { Navigator } from './index.js'
-    // let nav = new Navigator('./test.sqlite');
+    // import * as codenav from '@codenav/codenav'
+    // let nav = new Navigator(codenav.Language.Python, './test.sqlite');
     // ```
     #[napi(constructor)]
-    pub fn new(db_path: String) -> Self {
+    pub fn new(language: Language, db_path: String) -> Self {
         Self {
-            nav: codenav::Navigator::new(db_path),
+            nav: codenav::Navigator::new(language.to(), db_path),
         }
     }
 
@@ -168,9 +199,9 @@ impl Snippet {
     // let s = new Snippet("test.py", 0, 11);
     // ```
     #[napi(constructor)]
-    pub fn new(path: String, line_start: u32, line_end: u32) -> Self {
+    pub fn new(language: Language, path: String, line_start: u32, line_end: u32) -> Self {
         Self {
-            s: codenav::Snippet::new(path, line_start as usize, line_end as usize),
+            s: codenav::Snippet::new(language.to(), path, line_start as usize, line_end as usize),
         }
     }
 
@@ -187,6 +218,7 @@ impl Snippet {
     #[napi]
     pub fn contains(&self, d: &Definition) -> napi::Result<bool> {
         let contained = self.s.contains(codenav::Definition {
+            language: d.language.to(),
             path: d.path.clone(),
             span: codenav::Span {
                 start: codenav::Point {

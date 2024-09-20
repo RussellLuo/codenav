@@ -14,21 +14,24 @@ npm install @codenav/codenav
 
 ```javascript
 import * as codenav from '@codenav/codenav';
-// Create a navigator with a test database.
-const nav = new codenav.Navigator('./test.sqlite');
-// Index the examples folder (force a re-index).
-nav.index(['/<YOUR_LOCAL_PATH>/codenav/examples'], true);
-// Construct a reference "broil".
-const reference = {path: '/<YOUR_LOCAL_PATH>/codenav/examples/chef.py', line: 2, column: 4, text: 'broil'};
-// Find the definition(s) for "broil".
+const nav = new codenav.Navigator(codenav.Language.Python, './test.sqlite');
+nav.index(['<YOUR_LOCAL_PATH>/codenav/examples/python'], false);
+const reference = {path: '<YOUR_LOCAL_PATH>/codenav/examples/python/chef.py', line: 2, column: 0, text: 'broil'};
 const definitions = nav.resolve(reference);
 for (let d of definitions) {
-    console.log(`${d.path}:${d.span.start.line}:${d.span.start.column}`);
-    console.log(d.text(codenav.TextMode.Complete));
+  console.log(`${d.path}:${d.span.start.line}:${d.span.start.column}`);
+  console.log(d.text(codenav.TextMode.Complete));
 }
-// Clean the test database (also delete the database).
 nav.clean(true);
 ```
+
+
+## Examples
+
+- [Resolve a Python reference](examples/resolve_python_reference.js)
+- [Resolve a Python snippet](examples/resolve_python_snippet.js)
+- [Resolve a JavaScript reference](examples/resolve_javascript_reference.js)
+- [Resolve a JavaScript snippet](examples/resolve_javascript_snippet.js)
 
 
 ## Development
@@ -45,10 +48,13 @@ Build the native package:
 napi build --platform --release
 ```
 
-Run the test script:
+Run the examples:
 
 ```bash
-node examples/test.mjs
+node examples/resolve_python_reference.js
+node examples/resolve_python_snippet.js
+node examples/resolve_javascript_reference.js
+node examples/resolve_javascript_snippet.js
 ```
 
 
