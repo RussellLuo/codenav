@@ -25,14 +25,18 @@ jobs:
             target: x86_64
           - runner: ubuntu-latest
             target: x86
-          - runner: ubuntu-latest
-            target: aarch64
+          # Note that aarch64, s390x and ppc64le are commented out since there are some issues when building tree-sitter-javascript v0.20.4:
+          #     error: 'for' loop initial declarations are only allowed in C99 mode
+          # See https://github.com/RussellLuo/codenav/actions/runs/10961482459/job/30438509720
+          #
+          #- runner: ubuntu-latest
+          #  target: aarch64
           - runner: ubuntu-latest
             target: armv7
-          - runner: ubuntu-latest
-            target: s390x
-          - runner: ubuntu-latest
-            target: ppc64le
+          #- runner: ubuntu-latest
+          #  target: s390x
+          #- runner: ubuntu-latest
+          #  target: ppc64le
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
