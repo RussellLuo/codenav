@@ -32,6 +32,8 @@ nav.clean(true);
 - [Resolve a Python snippet](examples/resolve_python_snippet.js)
 - [Resolve a JavaScript reference](examples/resolve_javascript_reference.js)
 - [Resolve a JavaScript snippet](examples/resolve_javascript_snippet.js)
+- [Resolve a TypeScript reference](examples/resolve_typescript_reference.js)
+- [Resolve a TypeScript snippet](examples/resolve_typescript_snippet.js)
 
 
 ## Development
@@ -55,6 +57,8 @@ node examples/resolve_python_reference.js
 node examples/resolve_python_snippet.js
 node examples/resolve_javascript_reference.js
 node examples/resolve_javascript_snippet.js
+node examples/resolve_typescript_reference.js
+node examples/resolve_typescript_snippet.js
 ```
 
 

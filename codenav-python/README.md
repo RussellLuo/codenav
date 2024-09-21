@@ -31,6 +31,8 @@ nav.clean(True)
 - [Resolve a Python snippet](examples/resolve_python_snippet.py)
 - [Resolve a JavaScript reference](examples/resolve_javascript_reference.py)
 - [Resolve a JavaScript snippet](examples/resolve_javascript_snippet.py)
+- [Resolve a TypeScript reference](examples/resolve_typescript_reference.py)
+- [Resolve a TypeScript snippet](examples/resolve_typescript_snippet.py)
 
 
 ## Development
@@ -54,6 +56,8 @@ python examples/resolve_python_reference.py
 python examples/resolve_python_snippet.py
 python examples/resolve_javascript_reference.py
 python examples/resolve_javascript_snippet.py
+python examples/resolve_typescript_reference.py
+python examples/resolve_typescript_snippet.py
 ```
 
 

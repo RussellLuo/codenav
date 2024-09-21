@@ -1,4 +1,4 @@
-import * as stove from './stove.js';
+import * as stove from './stove';
 
 export function broil() {
   console.log("We're broiling!");
