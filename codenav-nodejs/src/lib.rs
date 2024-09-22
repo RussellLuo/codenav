@@ -6,6 +6,7 @@ use napi_derive::napi;
 pub enum Language {
     Python = 0,
     JavaScript = 1,
+    TypeScript = 2,
 }
 
 impl From<codenav::Language> for Language {
@@ -13,6 +14,7 @@ impl From<codenav::Language> for Language {
         match language {
             codenav::Language::Python => Language::Python,
             codenav::Language::JavaScript => Language::JavaScript,
+            codenav::Language::TypeScript => Language::TypeScript,
             _ => panic!("Unsupport language: {:?}", language),
         }
     }
@@ -24,6 +26,7 @@ impl Language {
         match self {
             Language::Python => codenav::Language::Python,
             Language::JavaScript => codenav::Language::JavaScript,
+            Language::TypeScript => codenav::Language::TypeScript,
             _ => panic!("Unsupport language: {:?}", self),
         }
     }

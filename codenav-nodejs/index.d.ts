@@ -5,7 +5,8 @@
 
 export const enum Language {
   Python = 0,
-  JavaScript = 1
+  JavaScript = 1,
+  TypeScript = 2
 }
 export interface Point {
   line: number

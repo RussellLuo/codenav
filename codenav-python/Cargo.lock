@@ -289,6 +289,8 @@ dependencies = [
  "tree-sitter-stack-graphs",
  "tree-sitter-stack-graphs-javascript",
  "tree-sitter-stack-graphs-python",
+ "tree-sitter-stack-graphs-typescript",
+ "tree-sitter-typescript",
 ]
 
 [[package]]
@@ -610,6 +612,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -765,6 +773,12 @@ checksum = "1868808506b929d7b0cfa8f75951347aa71bb21144b7791bae35d9bccfcfe37a"
 dependencies = [
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "json_comments"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9dbbfed4e59ba9750e15ba154fdfd9329cee16ff3df539c2666b70f58cc32105"
 
 [[package]]
 name = "lazy_static"
@@ -1475,6 +1489,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree-sitter-stack-graphs-typescript"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "928570dce64d9eef4bdf8693567ab18cb0350095d0686ab03f8b2206defe387d"
+dependencies = [
+ "anyhow",
+ "glob",
+ "regex",
+ "serde",
+ "serde_json",
+ "stack-graphs",
+ "tree-sitter-stack-graphs",
+ "tree-sitter-typescript",
+ "tsconfig",
+]
+
+[[package]]
 name = "tree-sitter-tags"
 version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1484,6 +1515,29 @@ dependencies = [
  "regex",
  "thiserror",
  "tree-sitter",
+]
+
+[[package]]
+name = "tree-sitter-typescript"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "079c695c32d39ad089101c66393aeaca30e967fba3486a91f573d2f0e12d290a"
+dependencies = [
+ "cc",
+ "tree-sitter",
+]
+
+[[package]]
+name = "tsconfig"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8613a6b9775c1e28349947b29fe983d288be5286285aa04e1282207b28be2a48"
+dependencies = [
+ "json_comments",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

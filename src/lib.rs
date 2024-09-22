@@ -18,10 +18,14 @@ pub const PYTHON_REFERENCES_QUERY_SOURCE: &str = include_str!("python-references
 /// The tree-sitter references query source for JavaScript language.
 pub const JAVASCRIPT_REFERENCES_QUERY_SOURCE: &str = include_str!("javascript-references.scm");
 
+/// The tree-sitter references query source for TypeScript language.
+pub const TYPESCRIPT_REFERENCES_QUERY_SOURCE: &str = include_str!("typescript-references.scm");
+
 #[derive(Debug, Clone)]
 pub enum Language {
     Python,
     JavaScript,
+    TypeScript,
 }
 
 pub enum TextMode {
@@ -91,7 +95,7 @@ impl Navigator {
     }
 
     pub fn index(&self, source_paths: Vec<String>, force: bool) -> anyhow::Result<()> {
-        // Only handle Python and JavaScript for now.
+        // Only handle Python, JavaScript and TypeScript for now.
         let lc = match self.language {
             Language::Python => {
                 tree_sitter_stack_graphs_python::try_language_configuration(&NoCancellation)
@@ -100,6 +104,12 @@ impl Navigator {
             Language::JavaScript => {
                 tree_sitter_stack_graphs_javascript::try_language_configuration(&NoCancellation)
                     .unwrap()
+            }
+            Language::TypeScript => {
+                tree_sitter_stack_graphs_typescript::try_language_configuration_typescript(
+                    &NoCancellation,
+                )
+                .unwrap()
             }
             _ => panic!("Unsupport language: {:?}", self.language),
         };
@@ -251,6 +261,7 @@ impl Snippet {
             match self.language {
                 Language::Python => PYTHON_REFERENCES_QUERY_SOURCE.to_string(),
                 Language::JavaScript => JAVASCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
+                Language::TypeScript => TYPESCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
                 _ => panic!("Unsupport language: {:?}", self.language),
             }
         } else {
@@ -267,6 +278,7 @@ impl Snippet {
         let language = match self.language {
             Language::Python => tree_sitter_python::language(),
             Language::JavaScript => tree_sitter_javascript::language(),
+            Language::TypeScript => tree_sitter_typescript::language_typescript(),
             _ => panic!("Unsupport language: {:?}", self.language),
         };
         parser
@@ -321,6 +333,7 @@ impl Definition {
         let language = match self.language {
             Language::Python => tree_sitter_python::language(),
             Language::JavaScript => tree_sitter_javascript::language(),
+            Language::TypeScript => tree_sitter_typescript::language_typescript(),
             _ => panic!("Unsupport language: {:?}", self.language),
         };
         parser
@@ -334,6 +347,7 @@ impl Definition {
         let module_node_kind = match self.language {
             Language::Python => "module",
             Language::JavaScript => "program",
+            Language::TypeScript => "program",
             _ => panic!("Unsupport language: {:?}", self.language),
         };
 
@@ -364,6 +378,11 @@ impl Definition {
                         match self.language {
                             Language::Python => self.python_collect_node_lines(&mut lines, node),
                             Language::JavaScript => {
+                                self.javascript_collect_node_lines(&mut lines, node)
+                            }
+                            Language::TypeScript => {
+                                // TODO: define a separate typescript_collect_node_lines if there're differences.
+                                //self.typescript_collect_node_lines(&mut lines, node)
                                 self.javascript_collect_node_lines(&mut lines, node)
                             }
                             _ => panic!("Unsupport language: {:?}", self.language),
@@ -569,7 +588,7 @@ mod tests {
         let reference = Reference {
             path: examples_dir.join("chef.py").display().to_string(),
             line: 2,
-            column: 4,
+            column: 0,
             text: String::from("broil"),
         };
 
@@ -660,7 +679,7 @@ mod tests {
         let reference = Reference {
             path: examples_dir.join("chef.js").display().to_string(),
             line: 2,
-            column: 4,
+            column: 0,
             text: String::from("broil"),
         };
 
@@ -680,7 +699,7 @@ mod tests {
             })
             .collect();
 
-        //nav.clean(true);
+        nav.clean(true);
 
         assert_eq!(defs, vec!["chef.js:0:9", "kitchen.js:2:16"]);
     }
@@ -708,7 +727,109 @@ mod tests {
         };
         assert_eq!(
             definition.text(TextMode::Complete),
-            "export function broil() {\n    console.log('broil');\n}",
+            "export function broil() {\n  console.log('broil');\n}",
+        );
+        assert_eq!(
+            definition.text(TextMode::Overview),
+            "export function broil() {\n...\n}",
+        );
+    }
+
+    #[test]
+    fn typescript_snippet_references() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("typescript");
+
+        let mut snippet = Snippet::new(
+            Language::TypeScript,
+            examples_dir.join("chef.ts").display().to_string(),
+            2,
+            2,
+        );
+        let references = snippet.references(String::from(""));
+        let refs: Vec<_> = references
+            .into_iter()
+            .map(|r| {
+                format!(
+                    "{}:{}:{}=>{}",
+                    Path::new(&r.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    r.line,
+                    r.column,
+                    r.text,
+                )
+            })
+            .collect();
+
+        assert_eq!(refs, vec!["chef.ts:2:0=>broil"]);
+    }
+
+    #[test]
+    fn typescript_navigator_resolve() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("typescript");
+
+        let mut nav = Navigator::new(Language::TypeScript, String::from("./test.sqlite"));
+        nav.index(vec![examples_dir.display().to_string()], true);
+
+        let reference = Reference {
+            path: examples_dir.join("chef.ts").display().to_string(),
+            line: 2,
+            column: 0,
+            text: String::from("broil"),
+        };
+
+        let definitions = nav.resolve(reference);
+        let defs: Vec<_> = definitions
+            .into_iter()
+            .map(|d| {
+                format!(
+                    "{}:{}:{}",
+                    Path::new(&d.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    d.span.start.line,
+                    d.span.start.column
+                )
+            })
+            .collect();
+
+        nav.clean(true);
+
+        assert_eq!(defs, vec!["chef.ts:0:9", "kitchen.ts:2:16"]);
+    }
+
+    #[test]
+    fn typescript_definition_text() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("typescript");
+
+        let definition = Definition {
+            language: Language::TypeScript,
+            path: examples_dir.join("stove.ts").display().to_string(),
+            span: Span {
+                start: Point {
+                    line: 4,
+                    column: 16,
+                },
+                end: Point {
+                    line: 4,
+                    column: 20,
+                },
+            },
+        };
+        assert_eq!(
+            definition.text(TextMode::Complete),
+            "export function broil() {\n  console.log('broil');\n}",
         );
         assert_eq!(
             definition.text(TextMode::Overview),
