@@ -133,13 +133,13 @@ impl Navigator {
     }
 
     pub fn clean(&self, delete: bool) -> anyhow::Result<()> {
-        let mut db = SQLiteWriter::open(&self.db_path)?;
         if delete {
             if !self.db_path.exists() {
                 return Ok(());
             }
             std::fs::remove_file(&self.db_path)?;
         } else {
+            let mut db = SQLiteWriter::open(&self.db_path)?;
             db.clean_all()?;
         }
         Ok(())
