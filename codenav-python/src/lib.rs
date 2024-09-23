@@ -253,6 +253,11 @@ struct Navigator {
 
 #[pymethods]
 impl Navigator {
+    // Args:
+    // language: The programming language.
+    // db_path: Path of the indexing database to use.
+    // verbose: Whether to print the detailed logs.
+    //
     // Example:
     //
     // ```python
@@ -260,9 +265,10 @@ impl Navigator {
     // nav = codenav.Navigator(codenav.Language.Python, "./test.sqlite")
     // ```
     #[new]
-    fn new(language: Language, db_path: String) -> Self {
+    #[pyo3(signature = (language, db_path, verbose=false, /))]
+    fn new(language: Language, db_path: String, verbose: bool) -> Self {
         Self {
-            nav: codenav::Navigator::new(language.to(), db_path),
+            nav: codenav::Navigator::new(language.to(), db_path, verbose),
         }
     }
 

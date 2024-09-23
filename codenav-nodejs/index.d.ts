@@ -37,7 +37,7 @@ export declare class Definition {
   text(mode: TextMode): string
 }
 export declare class Navigator {
-  constructor(language: Language, dbPath: string)
+  constructor(language: Language, dbPath: string, verbose: boolean)
   index(sourcePaths: Array<string>, force: boolean): void
   clean(delete: boolean): void
   resolve(reference: Reference): Array<Definition>

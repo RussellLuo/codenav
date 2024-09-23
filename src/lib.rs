@@ -85,11 +85,11 @@ pub struct Navigator {
 }
 
 impl Navigator {
-    pub fn new(language: Language, db_path: String) -> Self {
+    pub fn new(language: Language, db_path: String, verbose: bool) -> Self {
         Self {
             db_path: PathBuf::from(db_path),
             language: language,
-            verbose: false,
+            verbose: verbose,
             hide_error_details: false,
         }
     }
@@ -582,7 +582,7 @@ mod tests {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
 
-        let mut nav = Navigator::new(Language::Python, String::from("./test.sqlite"));
+        let mut nav = Navigator::new(Language::Python, String::from("./test.sqlite"), false);
         nav.index(vec![examples_dir.display().to_string()], true);
 
         let reference = Reference {
@@ -673,7 +673,7 @@ mod tests {
             .join("examples")
             .join("javascript");
 
-        let mut nav = Navigator::new(Language::JavaScript, String::from("./test.sqlite"));
+        let mut nav = Navigator::new(Language::JavaScript, String::from("./test.sqlite"), false);
         nav.index(vec![examples_dir.display().to_string()], true);
 
         let reference = Reference {
@@ -775,7 +775,7 @@ mod tests {
             .join("examples")
             .join("typescript");
 
-        let mut nav = Navigator::new(Language::TypeScript, String::from("./test.sqlite"));
+        let mut nav = Navigator::new(Language::TypeScript, String::from("./test.sqlite"), false);
         nav.index(vec![examples_dir.display().to_string()], true);
 
         let reference = Reference {

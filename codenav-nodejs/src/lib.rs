@@ -146,16 +146,21 @@ pub struct Navigator {
 
 #[napi]
 impl Navigator {
+    // Args:
+    // language: The programming language.
+    // db_path: Path of the indexing database to use.
+    // verbose: Whether to print the detailed logs.
+    //
     // Example:
     //
     // ```javascript
     // import * as codenav from '@codenav/codenav'
-    // let nav = new Navigator(codenav.Language.Python, './test.sqlite');
+    // let nav = new Navigator(codenav.Language.Python, './test.sqlite', false);
     // ```
     #[napi(constructor)]
-    pub fn new(language: Language, db_path: String) -> Self {
+    pub fn new(language: Language, db_path: String, verbose: bool) -> Self {
         Self {
-            nav: codenav::Navigator::new(language.to(), db_path),
+            nav: codenav::Navigator::new(language.to(), db_path, verbose),
         }
     }
 

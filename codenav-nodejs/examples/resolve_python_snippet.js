@@ -3,7 +3,7 @@ const EXAMPLES_DIR = path.join(path.dirname(path.dirname(import.meta.dirname)), 
 
 import * as codenav from '../index.js';
 
-const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite');
+const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite', false);
 nav.index([EXAMPLES_DIR], false);
 
 const snippet = new codenav.Snippet(codenav.Language.Python, path.join(EXAMPLES_DIR, 'kitchen.py'), 2, 4);
