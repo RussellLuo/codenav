@@ -494,9 +494,9 @@ jobs:
           filters: |
             nodejs:
               - 'src/**'
-              - 'nodenav-nodejs/src/**'
-              - 'nodenav-nodejs/Cargo.toml'
-              - 'nodenav-nodejs/package.json'
+              - 'codenav-nodejs/src/**'
+              - 'codenav-nodejs/Cargo.toml'
+              - 'codenav-nodejs/package.json'
       - name: Setup node
         uses: actions/setup-node@v4
         with:
