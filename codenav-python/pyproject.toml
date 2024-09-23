@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "codenav-python"
-version = "0.0.1"
+version = "0.0.2"
 description = "Python bindings for CodeNav."
 authors = [{ name = "RussellLuo", email = "luopeng.he@gmail.com" }]
 readme = "README.md"

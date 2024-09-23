@@ -172,9 +172,9 @@ jobs:
           filters: |
             python:
               - 'src/**'
-              - 'nodenav-python/src/**'
-              - 'nodenav-python/Cargo.toml'
-              - 'nodenav-python/pyproject.toml'
+              - 'codenav-python/src/**'
+              - 'codenav-python/Cargo.toml'
+              - 'codenav-python/pyproject.toml'
       - uses: actions/download-artifact@v4
         if: steps.filter.outputs.python == 'true'
       - name: Publish to PyPI
