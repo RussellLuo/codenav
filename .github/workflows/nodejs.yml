@@ -473,7 +473,7 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
-    #if: "startsWith(github.ref, 'refs/tags/')"
+    if: "startsWith(github.ref, 'refs/tags/')"
     defaults:
       run:
         working-directory: codenav-nodejs
@@ -518,16 +518,16 @@ jobs:
         if: steps.filter.outputs.nodejs == 'true'
         run: ls -R ./npm
         shell: bash
-      #- name: Publish
-      #  if: steps.filter.outputs.nodejs == 'true'
-      #  run: |
-      #    npm config set provenance true
-      #    echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-      #    if [[ $GITHUB_REF =~ refs/tags/v(.*)-beta.* ]]; then
-      #      npm publish --access public --tag preview
-      #    else
-      #      npm publish --access public
-      #    fi
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish
+        if: steps.filter.outputs.nodejs == 'true'
+        run: |
+          npm config set provenance true
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          if [[ $GITHUB_REF =~ refs/tags/v(.*)-beta.* ]]; then
+            npm publish --access public --tag preview
+          else
+            npm publish --access public
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
