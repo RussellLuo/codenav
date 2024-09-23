@@ -180,7 +180,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: needs.check-release.outputs.release == 'true'
+    #if: needs.check-release.outputs.release == 'true'
     needs: [linux, musllinux, windows, macos, sdist]
     steps:
       - uses: actions/checkout@v4
