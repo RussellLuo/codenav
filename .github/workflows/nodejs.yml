@@ -12,7 +12,7 @@ on:
     branches:
       - main
     tags:
-      - 'nodejs-v*'
+      - 'v*'
   pull_request:
     paths:
       - src/**
@@ -488,6 +488,15 @@ jobs:
       - universal-macOS
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            nodejs:
+              - 'src/**'
+              - 'nodenav-nodejs/src/**'
+              - 'nodenav-nodejs/Cargo.toml'
+              - 'nodenav-nodejs/package.json'
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -495,17 +504,22 @@ jobs:
           cache: yarn
           cache-dependency-path: codenav-nodejs/yarn.lock
       - name: Install dependencies
+        if: steps.filter.outputs.nodejs == 'true'
         run: yarn install
       - name: Download all artifacts
+        if: steps.filter.outputs.nodejs == 'true'
         uses: actions/download-artifact@v4
         with:
           path: codenav-nodejs/artifacts
       - name: Move artifacts
+        if: steps.filter.outputs.nodejs == 'true'
         run: yarn artifacts --dir artifacts --dist npm
       - name: List packages
+        if: steps.filter.outputs.nodejs == 'true'
         run: ls -R ./npm
         shell: bash
       - name: Publish
+        if: steps.filter.outputs.nodejs == 'true'
         run: |
           npm config set provenance true
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc

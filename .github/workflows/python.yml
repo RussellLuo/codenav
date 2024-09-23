@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'python-v*'
+      - 'v*'
   pull_request:
     paths:
       - src/**
@@ -165,8 +165,20 @@ jobs:
     if: "startsWith(github.ref, 'refs/tags/')"
     needs: [linux, musllinux, windows, macos, sdist]
     steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - 'src/**'
+              - 'nodenav-python/src/**'
+              - 'nodenav-python/Cargo.toml'
+              - 'nodenav-python/pyproject.toml'
       - uses: actions/download-artifact@v4
+        if: steps.filter.outputs.python == 'true'
       - name: Publish to PyPI
+        if: steps.filter.outputs.python == 'true'
         uses: PyO3/maturin-action@v1
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
