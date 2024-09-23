@@ -4,7 +4,7 @@ import * as path from 'path';
 const EXAMPLES_DIR = path.join(path.dirname(path.dirname(import.meta.dirname)), 'examples', 'python');
 
 import * as codenav from '../index.js';
-const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite');
+const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite', false);
 
 test('resloving references', (t) => {
   nav.index([EXAMPLES_DIR], false);
