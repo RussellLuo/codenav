@@ -470,10 +470,32 @@ jobs:
           name: bindings-universal-apple-darwin
           path: codenav-nodejs/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
+
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.check-release-commit.outputs.release }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # See https://github.com/actions/checkout#Checkout-pull-request-HEAD-commit-instead-of-merge-commit
+        # and https://github.com/actions/checkout/issues/426
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Check if it's a release commit
+      id: check-release-commit
+      run: |
+        commit_message=$(git log --format=%B -n 1)
+        echo "Commit message: '$commit_message'"
+        if [[ "$commit_message" =~ ^Release\ v[0-9]+(\.[0-9]+)* ]]; then
+          echo "::set-output name=release::true"
+        else
+          echo "::set-output name=release::false"
+        fi
+
   publish:
     name: Publish
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
+    if: needs.check-release.outputs.release == 'true'
     defaults:
       run:
         working-directory: codenav-nodejs
@@ -486,19 +508,19 @@ jobs:
       - test-linux-aarch64-musl-binding
       - test-linux-arm-gnueabihf-binding
       - universal-macOS
+      - check-release
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # "version" in package.json will be bumped by `npm version patch`
           filters: |
             nodejs:
-              - 'src/**'
-              - 'codenav-nodejs/src/**'
-              - 'codenav-nodejs/Cargo.toml'
               - 'codenav-nodejs/package.json'
       - name: Setup node
         uses: actions/setup-node@v4
+        if: steps.filter.outputs.nodejs == 'true'
         with:
           node-version: 20
           cache: yarn
