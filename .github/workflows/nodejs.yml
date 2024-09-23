@@ -514,11 +514,9 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # "version" in package.json will be bumped by `npm version patch`
           filters: |
             nodejs:
-              - 'src/**'
-              - 'codenav-nodejs/src/**'
-              - 'codenav-nodejs/Cargo.toml'
               - 'codenav-nodejs/package.json'
       - name: Setup node
         uses: actions/setup-node@v4
