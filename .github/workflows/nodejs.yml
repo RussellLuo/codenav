@@ -476,8 +476,11 @@ jobs:
     outputs:
       release: ${{ steps.check-release-commit.outputs.release }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        # See https://github.com/actions/checkout?#Checkout-pull-request-HEAD-commit-instead-of-merge-commit
+        # and https://github.com/actions/checkout/issues/426
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Check if it's a release commit
       id: check-release-commit
       run: |
