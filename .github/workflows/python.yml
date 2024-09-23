@@ -166,7 +166,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        # See https://github.com/actions/checkout?#Checkout-pull-request-HEAD-commit-instead-of-merge-commit
+        # See https://github.com/actions/checkout#Checkout-pull-request-HEAD-commit-instead-of-merge-commit
         # and https://github.com/actions/checkout/issues/426
         ref: ${{ github.event.pull_request.head.sha }}
     - name: Check if it's a release commit
@@ -184,7 +184,13 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: needs.check-release.outputs.release == 'true'
-    needs: [linux, musllinux, windows, macos, sdist, check-release]
+    needs:
+      - linux
+      - musllinux
+      - windows
+      - macos
+      - sdist
+      - check-release
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
