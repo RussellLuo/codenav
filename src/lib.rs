@@ -209,7 +209,21 @@ impl Navigator {
                 //);
             }
         }
+        // Filter out empty definitions.
+        //
+        // For example:
+        //
+        // ```
+        // Resolving ./examples/python/kitchen.py:4:11 "stove"
+        // ./examples/python/kitchen.py:0:7-0:12
+        // import stove
+        // ./examples/python/stove.py:0:0-0:0                 <= This is an empty definition ("stove" is actually a Python module)
+        // ...
+        // ```
         all_definitions
+            .into_iter()
+            .filter(|d| !d.is_empty())
+            .collect::<Vec<_>>()
     }
 
     fn get_reporter(&self) -> ConsoleReporter {
@@ -381,7 +395,7 @@ impl Definition {
                                 self.javascript_collect_node_lines(&mut lines, node)
                             }
                             Language::TypeScript => {
-                                // TODO: define a separate typescript_collect_node_lines if there're differences.
+                                // TODO: define a separate method `typescript_collect_node_lines` if there're differences.
                                 //self.typescript_collect_node_lines(&mut lines, node)
                                 self.javascript_collect_node_lines(&mut lines, node)
                             }
@@ -420,7 +434,7 @@ impl Definition {
         String::from("")
     }
 
-    pub fn python_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
+    fn python_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
         //println!("kind: {:?}, node: {:?}", node.kind(), node);
         match node.kind() {
             "class_definition" => {
@@ -477,7 +491,7 @@ impl Definition {
         }
     }
 
-    pub fn javascript_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
+    fn javascript_collect_node_lines(&self, lines: &mut Vec<String>, node: Node) {
         match node.kind() {
             "export_statement" => {
                 //println!("this is a export statement");
@@ -538,6 +552,13 @@ impl Definition {
 
             _ => {}
         }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.span.start.line == 0
+            && self.span.start.column == 0
+            && self.span.end.line == 0
+            && self.span.end.column == 0
     }
 }
 
