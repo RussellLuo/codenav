@@ -1,12 +1,12 @@
 from pathlib import Path
-EXAMPLES_DIR = f'{Path(__file__).parent.parent.parent}/examples/python'
+EXAMPLES_DIR = Path(__file__).parent.parent.parent / 'examples' / 'python'
 
 import codenav
 
-nav = codenav.Navigator(codenav.Language.Python, "./test.sqlite")
-nav.index([EXAMPLES_DIR])
+nav = codenav.Navigator(codenav.Language.Python, 'test.sqlite')
+nav.index([str(EXAMPLES_DIR)])
 
-snippet = codenav.Snippet(codenav.Language.Python, f'{EXAMPLES_DIR}/kitchen.py', 2, 4)
+snippet = codenav.Snippet(codenav.Language.Python, str(EXAMPLES_DIR / 'kitchen.py'), 2, 4)
 
 for reference in snippet.references():
     definitions = nav.resolve(reference)

@@ -1,12 +1,12 @@
 from pathlib import Path
-EXAMPLES_DIR = f'{Path(__file__).parent.parent.parent}/examples/typescript'
+EXAMPLES_DIR = Path(__file__).parent.parent.parent / 'examples' / 'typescript'
 
 import codenav
 
-nav = codenav.Navigator(codenav.Language.TypeScript, "./test.sqlite")
-nav.index([EXAMPLES_DIR])
+nav = codenav.Navigator(codenav.Language.TypeScript, 'test.sqlite')
+nav.index([str(EXAMPLES_DIR)])
 
-snippet = codenav.Snippet(codenav.Language.TypeScript, f'{EXAMPLES_DIR}/kitchen.ts', 2, 5)
+snippet = codenav.Snippet(codenav.Language.TypeScript, str(EXAMPLES_DIR / 'kitchen.ts'), 2, 5)
 
 for reference in snippet.references():
     definitions = nav.resolve(reference)

@@ -14,7 +14,7 @@ pip install codenav-python
 
 ```python
 import codenav
-nav = codenav.Navigator(codenav.Language.Python, './test.sqlite')
+nav = codenav.Navigator(codenav.Language.Python, 'test.sqlite')
 nav.index(['<YOUR_LOCAL_PATH>/codenav/examples/python'])
 reference = codenav.Reference('<YOUR_LOCAL_PATH>/codenav/examples/python/chef.py', 2, 0, 'broil')
 definitions = nav.resolve(reference)

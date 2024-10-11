@@ -1,12 +1,12 @@
 from pathlib import Path
-EXAMPLES_DIR = f'{Path(__file__).parent.parent.parent}/examples/typescript'
+EXAMPLES_DIR = Path(__file__).parent.parent.parent / 'examples' / 'typescript'
 
 import codenav
 
-nav = codenav.Navigator(codenav.Language.TypeScript, './test.sqlite')
-nav.index([EXAMPLES_DIR])
+nav = codenav.Navigator(codenav.Language.TypeScript, 'test.sqlite')
+nav.index([str(EXAMPLES_DIR)])
 
-reference = codenav.Reference(f'{EXAMPLES_DIR}/chef.ts', 2, 0, 'broil')
+reference = codenav.Reference(str(EXAMPLES_DIR / 'chef.ts'), 2, 0, 'broil')
 
 msg = f'Resolving {reference.path}:{reference.line}:{reference.column} "{reference.text}"'
 print('=' * len(msg))

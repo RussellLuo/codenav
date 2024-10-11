@@ -14,7 +14,7 @@ npm install @codenav/codenav
 
 ```javascript
 import * as codenav from '@codenav/codenav';
-const nav = new codenav.Navigator(codenav.Language.Python, './test.sqlite');
+const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite', false);
 nav.index(['<YOUR_LOCAL_PATH>/codenav/examples/python'], false);
 const reference = {path: '<YOUR_LOCAL_PATH>/codenav/examples/python/chef.py', line: 2, column: 0, text: 'broil'};
 const definitions = nav.resolve(reference);
