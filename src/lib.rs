@@ -1,16 +1,14 @@
 use stack_graphs::storage::{SQLiteReader, SQLiteWriter};
-use std::collections::HashSet;
-use std::error::Error;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
-use string_builder::Builder;
-use tree_sitter::{Node, Parser, Query, QueryCursor, TreeCursor};
+use tree_sitter::{Node, Parser, Query, QueryCursor};
 use tree_sitter_stack_graphs::cli::index::Indexer;
 use tree_sitter_stack_graphs::cli::load::LanguageConfigurationsLoaderArgs;
 use tree_sitter_stack_graphs::cli::query::{Querier, QueryResult};
 use tree_sitter_stack_graphs::cli::util::reporter::{ConsoleReporter, Level};
 use tree_sitter_stack_graphs::cli::util::SourcePosition;
-use tree_sitter_stack_graphs::{CancellationFlag, NoCancellation};
+use tree_sitter_stack_graphs::NoCancellation;
 
 /// The tree-sitter references query source for Python language.
 pub const PYTHON_REFERENCES_QUERY_SOURCE: &str = include_str!("python-references.scm");
@@ -28,9 +26,17 @@ pub enum Language {
     TypeScript,
 }
 
-pub enum TextMode {
-    Overview,
-    Complete,
+impl From<&str> for Language {
+    fn from(path: &str) -> Self {
+        let ext = Path::new(path).extension().and_then(|e| e.to_str());
+
+        match ext {
+            Some("py") => Language::Python,
+            Some("js") => Language::JavaScript,
+            Some("ts") => Language::TypeScript,
+            _ => panic!("Unsupport extension: {:?}", ext),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -42,15 +48,6 @@ pub struct Point {
 pub struct Span {
     pub start: Point,
     pub end: Point,
-}
-
-pub struct Definition {
-    /// Programming language.
-    pub language: Language,
-    /// File path
-    pub path: String,
-    /// Span
-    pub span: Span,
 }
 
 pub struct Capture {
@@ -111,7 +108,6 @@ impl Navigator {
                 )
                 .unwrap()
             }
-            _ => panic!("Unsupport language: {:?}", self.language),
         };
 
         let configurations = vec![lc];
@@ -184,7 +180,6 @@ impl Navigator {
             //}
             for definition in definitions.into_iter() {
                 all_definitions.push(Definition {
-                    language: self.language.clone(),
                     path: definition.path.display().to_string(),
                     span: Span {
                         start: Point {
@@ -252,117 +247,41 @@ impl Navigator {
     }
 }
 
-pub struct Snippet {
-    language: Language,
-    path: String,
-    line_start: usize,
-    line_end: usize,
+pub enum TextMode {
+    Overview,
+    Complete,
 }
 
-impl Snippet {
-    pub fn new(language: Language, path: String, line_start: usize, line_end: usize) -> Self {
-        Self {
-            language: language,
-            path: path,
-            line_start: line_start,
-            line_end: line_end,
-        }
-    }
-
-    pub fn references(&self, query_path: String) -> Vec<Reference> {
-        let file_path = PathBuf::from(&self.path);
-        let query_source = if query_path.is_empty() {
-            match self.language {
-                Language::Python => PYTHON_REFERENCES_QUERY_SOURCE.to_string(),
-                Language::JavaScript => JAVASCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
-                Language::TypeScript => TYPESCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
-                _ => panic!("Unsupport language: {:?}", self.language),
-            }
-        } else {
-            let query_path = PathBuf::from(query_path);
-            fs::read_to_string(query_path).expect("Should have been able to read the query file")
-        };
-
-        let source_code = fs::read(&file_path).expect("Should have been able to read the file");
-
-        //println!("[SOURCE]\n\n{}\n", String::from_utf8_lossy(&source_code));
-        //println!("[QUERY]\n\n{}\n", query_source);
-
-        let mut parser = Parser::new();
-        let language = match self.language {
-            Language::Python => tree_sitter_python::language(),
-            Language::JavaScript => tree_sitter_javascript::language(),
-            Language::TypeScript => tree_sitter_typescript::language_typescript(),
-            _ => panic!("Unsupport language: {:?}", self.language),
-        };
-        parser
-            .set_language(language)
-            .expect("Error loading Python parser");
-
-        let tree = parser.parse(source_code.clone(), None).unwrap();
-        let root_node = tree.root_node();
-
-        let mut cursor = QueryCursor::new();
-        let query = Query::new(language, &query_source).unwrap();
-        let captures = cursor.captures(&query, root_node, source_code.as_slice());
-
-        let mut references: Vec<Reference> = Vec::new();
-        for (mat, capture_index) in captures {
-            let capture = mat.captures[capture_index];
-            let capture_name = &query.capture_names()[capture.index as usize];
-            let pos_start = capture.node.start_position();
-            let pos_end = capture.node.end_position();
-
-            if pos_start.row >= self.line_start && pos_end.row <= self.line_end {
-                //println!("[CAPTURE]\nname: {capture_name}, start: {}, end: {}, text: {:?}, capture: {:?}", pos_start, pos_end, capture.node.utf8_text(&source_code).unwrap_or(""), capture.node.to_sexp());
-                let reference = Reference {
-                    path: file_path.display().to_string(),
-                    line: pos_start.row,
-                    column: pos_start.column,
-                    text: capture
-                        .node
-                        .utf8_text(&source_code)
-                        .unwrap_or("")
-                        .to_string(),
-                };
-                references.push(reference);
-            }
-        }
-        references
-    }
-
-    pub fn contains(&self, d: Definition) -> bool {
-        d.path == self.path
-            && d.span.start.line >= self.line_start
-            && d.span.end.line <= self.line_end
-    }
+pub struct Definition {
+    /// File path
+    pub path: String,
+    /// Span
+    pub span: Span,
 }
 
 impl Definition {
     pub fn text(&self, mode: TextMode) -> String {
         let file_path = PathBuf::from(&self.path);
         let source_code = fs::read(&file_path).expect("Should have been able to read the file");
+        let definition_language = Language::from(self.path.as_str());
 
         let mut parser = Parser::new();
-        let language = match self.language {
+        let language = match definition_language {
             Language::Python => tree_sitter_python::language(),
             Language::JavaScript => tree_sitter_javascript::language(),
             Language::TypeScript => tree_sitter_typescript::language_typescript(),
-            _ => panic!("Unsupport language: {:?}", self.language),
         };
         parser
             .set_language(language)
-            .expect(format!("Error loading {:?} parser", self.language).as_str());
+            .expect(format!("Error loading {:?} parser", definition_language).as_str());
 
         let tree = parser.parse(source_code.clone(), None).unwrap();
-        let root_node = tree.root_node();
         let mut cursor = tree.walk();
 
-        let module_node_kind = match self.language {
+        let module_node_kind = match definition_language {
             Language::Python => "module",
             Language::JavaScript => "program",
             Language::TypeScript => "program",
-            _ => panic!("Unsupport language: {:?}", self.language),
         };
 
         let mut reached_root = false;
@@ -389,7 +308,7 @@ impl Definition {
                         for i in node.end_position().row + 1..lines.len() {
                             lines[i] = "".to_string();
                         }
-                        match self.language {
+                        match definition_language {
                             Language::Python => self.python_collect_node_lines(&mut lines, node),
                             Language::JavaScript => {
                                 self.javascript_collect_node_lines(&mut lines, node)
@@ -399,7 +318,6 @@ impl Definition {
                                 //self.typescript_collect_node_lines(&mut lines, node)
                                 self.javascript_collect_node_lines(&mut lines, node)
                             }
-                            _ => panic!("Unsupport language: {:?}", self.language),
                         }
                         return lines
                             .into_iter()
@@ -562,41 +480,92 @@ impl Definition {
     }
 }
 
+pub struct Snippet {
+    path: String,
+    line_start: usize,
+    line_end: usize,
+}
+
+impl Snippet {
+    pub fn new(path: String, line_start: usize, line_end: usize) -> Self {
+        Self {
+            path: path,
+            line_start: line_start,
+            line_end: line_end,
+        }
+    }
+
+    pub fn references(&self, query_path: String) -> Vec<Reference> {
+        let file_path = PathBuf::from(&self.path);
+        let snippet_language = Language::from(self.path.as_str());
+        let query_source = if query_path.is_empty() {
+            match snippet_language {
+                Language::Python => PYTHON_REFERENCES_QUERY_SOURCE.to_string(),
+                Language::JavaScript => JAVASCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
+                Language::TypeScript => TYPESCRIPT_REFERENCES_QUERY_SOURCE.to_string(),
+            }
+        } else {
+            let query_path = PathBuf::from(query_path);
+            fs::read_to_string(query_path).expect("Should have been able to read the query file")
+        };
+
+        let source_code = fs::read(&file_path).expect("Should have been able to read the file");
+
+        //println!("[SOURCE]\n\n{}\n", String::from_utf8_lossy(&source_code));
+        //println!("[QUERY]\n\n{}\n", query_source);
+
+        let mut parser = Parser::new();
+        let language = match snippet_language {
+            Language::Python => tree_sitter_python::language(),
+            Language::JavaScript => tree_sitter_javascript::language(),
+            Language::TypeScript => tree_sitter_typescript::language_typescript(),
+        };
+        parser
+            .set_language(language)
+            .expect("Error loading Python parser");
+
+        let tree = parser.parse(source_code.clone(), None).unwrap();
+        let root_node = tree.root_node();
+
+        let mut cursor = QueryCursor::new();
+        let query = Query::new(language, &query_source).unwrap();
+        let captures = cursor.captures(&query, root_node, source_code.as_slice());
+
+        let mut references: Vec<Reference> = Vec::new();
+        for (mat, capture_index) in captures {
+            let capture = mat.captures[capture_index];
+            let capture_name = &query.capture_names()[capture.index as usize];
+            let pos_start = capture.node.start_position();
+            let pos_end = capture.node.end_position();
+
+            if pos_start.row >= self.line_start && pos_end.row <= self.line_end {
+                //println!("[CAPTURE]\nname: {capture_name}, start: {}, end: {}, text: {:?}, capture: {:?}", pos_start, pos_end, capture.node.utf8_text(&source_code).unwrap_or(""), capture.node.to_sexp());
+                let reference = Reference {
+                    path: file_path.display().to_string(),
+                    line: pos_start.row,
+                    column: pos_start.column,
+                    text: capture
+                        .node
+                        .utf8_text(&source_code)
+                        .unwrap_or("")
+                        .to_string(),
+                };
+                references.push(reference);
+            }
+        }
+        references
+    }
+
+    pub fn contains(&self, d: Definition) -> bool {
+        d.path == self.path
+            && d.span.start.line >= self.line_start
+            && d.span.end.line <= self.line_end
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
-
-    #[test]
-    fn python_snippet_references() {
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
-
-        let mut snippet = Snippet::new(
-            Language::Python,
-            examples_dir.join("chef.py").display().to_string(),
-            2,
-            2,
-        );
-        let references = snippet.references(String::from(""));
-        let refs: Vec<_> = references
-            .into_iter()
-            .map(|r| {
-                format!(
-                    "{}:{}:{}=>{}",
-                    Path::new(&r.path)
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap(),
-                    r.line,
-                    r.column,
-                    r.text,
-                )
-            })
-            .collect();
-
-        assert_eq!(refs, vec!["chef.py:2:0=>broil"]);
-    }
 
     #[test]
     fn python_navigator_resolve() {
@@ -640,7 +609,6 @@ mod tests {
         let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
 
         let definition = Definition {
-            language: Language::Python,
             path: examples_dir.join("stove.py").display().to_string(),
             span: Span {
                 start: Point { line: 3, column: 4 },
@@ -655,18 +623,11 @@ mod tests {
     }
 
     #[test]
-    fn javascript_snippet_references() {
+    fn python_snippet_references() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let examples_dir = PathBuf::from(manifest_dir)
-            .join("examples")
-            .join("javascript");
+        let examples_dir = PathBuf::from(manifest_dir).join("examples").join("python");
 
-        let mut snippet = Snippet::new(
-            Language::JavaScript,
-            examples_dir.join("chef.js").display().to_string(),
-            2,
-            2,
-        );
+        let snippet = Snippet::new(examples_dir.join("chef.py").display().to_string(), 2, 2);
         let references = snippet.references(String::from(""));
         let refs: Vec<_> = references
             .into_iter()
@@ -684,7 +645,7 @@ mod tests {
             })
             .collect();
 
-        assert_eq!(refs, vec!["chef.js:2:0=>broil"]);
+        assert_eq!(refs, vec!["chef.py:2:0=>broil"]);
     }
 
     #[test]
@@ -733,7 +694,6 @@ mod tests {
             .join("javascript");
 
         let definition = Definition {
-            language: Language::JavaScript,
             path: examples_dir.join("stove.js").display().to_string(),
             span: Span {
                 start: Point {
@@ -757,18 +717,13 @@ mod tests {
     }
 
     #[test]
-    fn typescript_snippet_references() {
+    fn javascript_snippet_references() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let examples_dir = PathBuf::from(manifest_dir)
             .join("examples")
-            .join("typescript");
+            .join("javascript");
 
-        let mut snippet = Snippet::new(
-            Language::TypeScript,
-            examples_dir.join("chef.ts").display().to_string(),
-            2,
-            2,
-        );
+        let snippet = Snippet::new(examples_dir.join("chef.js").display().to_string(), 2, 2);
         let references = snippet.references(String::from(""));
         let refs: Vec<_> = references
             .into_iter()
@@ -786,7 +741,7 @@ mod tests {
             })
             .collect();
 
-        assert_eq!(refs, vec!["chef.ts:2:0=>broil"]);
+        assert_eq!(refs, vec!["chef.js:2:0=>broil"]);
     }
 
     #[test]
@@ -835,7 +790,6 @@ mod tests {
             .join("typescript");
 
         let definition = Definition {
-            language: Language::TypeScript,
             path: examples_dir.join("stove.ts").display().to_string(),
             span: Span {
                 start: Point {
@@ -856,5 +810,33 @@ mod tests {
             definition.text(TextMode::Overview),
             "export function broil() {\n...\n}",
         );
+    }
+
+    #[test]
+    fn typescript_snippet_references() {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let examples_dir = PathBuf::from(manifest_dir)
+            .join("examples")
+            .join("typescript");
+
+        let snippet = Snippet::new(examples_dir.join("chef.ts").display().to_string(), 2, 2);
+        let references = snippet.references(String::from(""));
+        let refs: Vec<_> = references
+            .into_iter()
+            .map(|r| {
+                format!(
+                    "{}:{}:{}=>{}",
+                    Path::new(&r.path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap(),
+                    r.line,
+                    r.column,
+                    r.text,
+                )
+            })
+            .collect();
+
+        assert_eq!(refs, vec!["chef.ts:2:0=>broil"]);
     }
 }

@@ -15,7 +15,6 @@ impl From<codenav::Language> for Language {
             codenav::Language::Python => Language::Python,
             codenav::Language::JavaScript => Language::JavaScript,
             codenav::Language::TypeScript => Language::TypeScript,
-            _ => panic!("Unsupport language: {:?}", language),
         }
     }
 }
@@ -27,7 +26,6 @@ impl Language {
             Language::Python => codenav::Language::Python,
             Language::JavaScript => codenav::Language::JavaScript,
             Language::TypeScript => codenav::Language::TypeScript,
-            _ => panic!("Unsupport language: {:?}", self),
         }
     }
 }
@@ -73,7 +71,6 @@ pub enum TextMode {
 #[napi]
 #[derive(Clone)]
 pub struct Definition {
-    pub language: Language,
     pub path: String,
     pub span: Span,
 }
@@ -83,7 +80,6 @@ impl Definition {
     #[napi]
     pub fn text(&self, mode: TextMode) -> napi::Result<String> {
         let d = codenav::Definition {
-            language: self.language.to(),
             path: self.path.clone(),
             span: codenav::Span {
                 start: codenav::Point {
@@ -108,7 +104,6 @@ impl Definition {
 impl From<codenav::Definition> for Definition {
     fn from(d: codenav::Definition) -> Self {
         Self {
-            language: Language::from(d.language),
             path: d.path,
             span: Span::from(d.span),
         }
@@ -207,9 +202,9 @@ impl Snippet {
     // let s = new Snippet("test.py", 0, 11);
     // ```
     #[napi(constructor)]
-    pub fn new(language: Language, path: String, line_start: u32, line_end: u32) -> Self {
+    pub fn new(path: String, line_start: u32, line_end: u32) -> Self {
         Self {
-            s: codenav::Snippet::new(language.to(), path, line_start as usize, line_end as usize),
+            s: codenav::Snippet::new(path, line_start as usize, line_end as usize),
         }
     }
 
@@ -226,7 +221,6 @@ impl Snippet {
     #[napi]
     pub fn contains(&self, d: &Definition) -> napi::Result<bool> {
         let contained = self.s.contains(codenav::Definition {
-            language: d.language.to(),
             path: d.path.clone(),
             span: codenav::Span {
                 start: codenav::Point {

@@ -6,7 +6,7 @@ import codenav
 nav = codenav.Navigator(codenav.Language.JavaScript, 'test.sqlite')
 nav.index([str(EXAMPLES_DIR)])
 
-snippet = codenav.Snippet(codenav.Language.JavaScript, str(EXAMPLES_DIR / 'kitchen.js'), 2, 5)
+snippet = codenav.Snippet(str(EXAMPLES_DIR / 'kitchen.js'), 2, 5)
 
 for reference in snippet.references():
     definitions = nav.resolve(reference)

@@ -31,7 +31,6 @@ export interface Reference {
   text: string
 }
 export declare class Definition {
-  language: Language
   path: string
   span: Span
   text(mode: TextMode): string
@@ -43,7 +42,7 @@ export declare class Navigator {
   resolve(reference: Reference): Array<Definition>
 }
 export declare class Snippet {
-  constructor(language: Language, path: string, lineStart: number, lineEnd: number)
+  constructor(path: string, lineStart: number, lineEnd: number)
   references(queryPath: string): Array<Reference>
   contains(d: Definition): boolean
 }

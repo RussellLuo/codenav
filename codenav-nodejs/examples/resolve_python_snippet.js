@@ -6,7 +6,7 @@ import * as codenav from '../index.js';
 const nav = new codenav.Navigator(codenav.Language.Python, 'test.sqlite', false);
 nav.index([EXAMPLES_DIR], false);
 
-const snippet = new codenav.Snippet(codenav.Language.Python, path.join(EXAMPLES_DIR, 'kitchen.py'), 2, 4);
+const snippet = new codenav.Snippet(path.join(EXAMPLES_DIR, 'kitchen.py'), 2, 4);
 
 for (let reference of snippet.references('')) {
   const definitions = nav.resolve(reference);
